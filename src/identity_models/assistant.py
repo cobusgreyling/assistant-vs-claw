@@ -1,5 +1,6 @@
 """Assistant pattern — credentials follow the human who invoked the agent."""
 
+from identity_models.audit import AuditEvent
 from identity_models.credentials import TokenStore
 from identity_models.data import notion_search
 from identity_models.memory import AssistantMemory
@@ -27,6 +28,14 @@ class AssistantAgent:
         self.memory.append(user_id, message)
         pages = self.search_notion(message, user_id)
         creds = get_user_credentials(user_id, self.token_store)
+        audit_event = AuditEvent(
+            principal=creds.principal_id,
+            model=IdentityModel.ASSISTANT,
+            action="notion.search",
+            query=message,
+            pages=tuple(pages),
+            triggered_by=user_id,
+        )
         return AgentResult(
             identity_model=IdentityModel.ASSISTANT,
             actor_label=f"{creds.principal_name} (via {self.name})",
@@ -34,4 +43,5 @@ class AssistantAgent:
             pages=pages,
             audit_line=f"{creds.principal_id} searched Notion for {message!r}",
             memory_key=user_id,
+            audit_event=audit_event,
         )

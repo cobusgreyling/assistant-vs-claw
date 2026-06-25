@@ -1,5 +1,6 @@
 """Claw pattern — one fixed identity, always."""
 
+from identity_models.audit import AuditEvent
 from identity_models.credentials import load_agent_credentials
 from identity_models.data import notion_search
 from identity_models.memory import ClawMemory
@@ -22,11 +23,20 @@ class ClawAgent:
         self.memory.append(message, sender=sender)
         pages = self.search_notion(message)
         sender_note = f" (triggered by {sender})" if sender else ""
+        audit_event = AuditEvent(
+            principal=self.credentials.principal_id,
+            model=IdentityModel.CLAW,
+            action="notion.search",
+            query=message,
+            pages=tuple(pages),
+            triggered_by=sender,
+        )
         return AgentResult(
             identity_model=IdentityModel.CLAW,
             actor_label=f"{self.credentials.principal_name}{sender_note}",
             query=message,
             pages=pages,
             audit_line=f"{self.credentials.principal_id} searched Notion for {message!r}",
+            audit_event=audit_event,
             extra={"sender": sender},
         )

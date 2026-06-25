@@ -16,12 +16,12 @@ NOTION_PAGES: dict[str, dict[str, str | list[str]]] = {
     },
     "alice-onboarding": {
         "title": "Alice — Week 1 Checklist",
-        "content": "Complete Rippling profile, set up laptop",
+        "content": "Onboarding: complete Rippling profile, set up laptop",
         "visible_to": ["alice@co"],
     },
     "bob-onboarding": {
         "title": "Bob — Week 1 Checklist",
-        "content": "Shadow sales calls, CRM access",
+        "content": "Onboarding: shadow sales calls, CRM access",
         "visible_to": ["bob@co"],
     },
     "q3-roadmap-public": {

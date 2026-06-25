@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
+from enum import StrEnum
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from identity_models.audit import AuditEvent
 
 
-class IdentityModel(str, Enum):
+class IdentityModel(StrEnum):
     ASSISTANT = "assistant"
     CLAW = "claw"
 
@@ -25,4 +30,5 @@ class AgentResult:
     pages: list[str]
     audit_line: str
     memory_key: str | None = None
+    audit_event: AuditEvent | None = None
     extra: dict[str, Any] = field(default_factory=dict)

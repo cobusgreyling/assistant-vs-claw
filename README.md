@@ -1,6 +1,13 @@
 # Assistant vs Claw
 
 <p align="center">
+  <a href="https://github.com/cobusgreyling/assistant-vs-claw/actions/workflows/test.yml"><img src="https://github.com/cobusgreyling/assistant-vs-claw/actions/workflows/test.yml/badge.svg" alt="tests"></a>
+  <a href="https://github.com/cobusgreyling/assistant-vs-claw/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
+  <a href="https://cobusgreyling.github.io/assistant-vs-claw/"><img src="https://img.shields.io/badge/GitHub_Pages-docs-6366f1" alt="Pages"></a>
+  <a href="https://colab.research.google.com/github/cobusgreyling/assistant-vs-claw/blob/main/notebooks/assistant_vs_claw.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab"></a>
+</p>
+
+<p align="center">
   <img src="assets/header.jpg" width="100%" alt="Assistant vs Claw — whose keys are in the lock?">
 </p>
 
@@ -9,6 +16,10 @@
 Runnable illustrations of the two authorization models in [LangSmith Fleet](https://www.langchain.com/langsmith/fleet). Same word — *agent*. Two completely different trust boundaries.
 
 **Created by [Cobus Greyling](https://github.com/cobusgreyling).** Part of the [Fleet Engineering](https://github.com/cobusgreyling/fleet-engineering) stack.
+
+<p align="center">
+  <strong><a href="https://cobusgreyling.github.io/assistant-vs-claw/">→ cobusgreyling.github.io/assistant-vs-claw</a></strong>
+</p>
 
 ---
 
@@ -48,22 +59,25 @@ cd assistant-vs-claw
 
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -e ".[dev]"
 
 # Run the full side-by-side comparison
-python demos/run_comparison.py
+avc-compare
 
 # Or run individual scenarios
-python examples/01_assistant_onboarding.py
-python examples/02_claw_email_agent.py
-python examples/03_claw_product_bot.py
-python examples/04_side_by_side_slack.py
+avc-onboarding
+avc-email
+avc-product
+avc-slack
+avc-vendor
 
 # Verify trust boundaries
-pytest -q
+make all
 ```
 
 No API keys required — everything runs against mock Notion, Slack, and OAuth data.
+
+**No local setup?** Open the [Colab notebook](https://colab.research.google.com/github/cobusgreyling/assistant-vs-claw/blob/main/notebooks/assistant_vs_claw.ipynb).
 
 ---
 
@@ -108,6 +122,23 @@ A competitor researcher, a vendor-intake bot, a `@weekly-numbers` Slack agent �
 
 See: [`src/identity_models/claw.py`](src/identity_models/claw.py)
 
+### Structured audit events
+
+Every run emits a Fleet-style audit record:
+
+```python
+{
+    "principal": "alice@co",
+    "model": "assistant",
+    "action": "notion.search",
+    "query": "salary",
+    "pages": ("Alice Chen — Compensation",),
+    "triggered_by": "alice@co",
+}
+```
+
+See: [`src/identity_models/audit.py`](src/identity_models/audit.py) · [`docs/FLEET_MAPPING.md`](docs/FLEET_MAPPING.md)
+
 ### Side by side: one Slack message, two outcomes
 
 Someone posts in `#general`: *"What's our Q3 roadmap?"*
@@ -119,25 +150,35 @@ Someone posts in `#general`: *"What's our Q3 roadmap?"*
 
 Same prompt. Same tool. Different trust boundary.
 
-Run it: [`examples/04_side_by_side_slack.py`](examples/04_side_by_side_slack.py)
+Run it: `avc-slack` or [`examples/04_side_by_side_slack.py`](examples/04_side_by_side_slack.py)
 
 ---
 
-## Three real agents, three design choices
+## Four real agents, four design choices
 
 | Agent | Model | Why |
 |-------|-------|-----|
 | **Onboarding Agent** | Assistant | Each hire sees their Rippling record and Notion docs. Alice's thread must never surface Bob's salary. |
 | **Email Agent** | Claw | Responds to inbound mail from anyone. Always checks your calendar and drafts from your identity. Sender is context, not delegation. |
 | **Product Agent** | Claw | Monitors competitors in a shared Notion workspace as `@product-bot`. One curated account — not everyone's personal permissions mashed together. |
+| **Vendor Intake Bot** | Claw | Shared intake queue with editor-only review before sensitive writes ship. |
 
-Examples: [`examples/`](examples/)
+Examples: [`examples/`](examples/) · Console: `avc-onboarding`, `avc-email`, `avc-product`, `avc-vendor`
 
 ---
 
 ## How to choose
 
 See the full decision guide: [`docs/CHOOSING.md`](docs/CHOOSING.md)
+
+```mermaid
+flowchart TD
+    A[New agent] --> B{Each user must see only their own data?}
+    B -->|Yes| C[Assistant — OAuth per user]
+    B -->|No| D{Team resource, schedule, or public channel?}
+    D -->|Yes| E[Claw — scoped service account]
+    D -->|No| F[Re-evaluate: mixed model or inbox HITL]
+```
 
 **Pick an Assistant when** each user must see only their own data, audit trails should name the human, and personalization is the point.
 
@@ -155,7 +196,7 @@ See the full decision guide: [`docs/CHOOSING.md`](docs/CHOOSING.md)
 | Inbox | Private per-user for sensitive personal tasks | Editor-only: leads review before sensitive actions ship |
 | Channels | Needs Slack/Teams user ID → LangSmith user mapping | Can drop into more surfaces — only needs the message |
 
-See: [`src/identity_models/memory.py`](src/identity_models/memory.py)
+See: [`src/identity_models/memory.py`](src/identity_models/memory.py) · [`src/identity_models/inbox.py`](src/identity_models/inbox.py)
 
 ---
 
@@ -163,12 +204,19 @@ See: [`src/identity_models/memory.py`](src/identity_models/memory.py)
 
 ```
 assistant-vs-claw/
-├── src/identity_models/     # Core patterns (Assistant, Claw, credentials, memory)
-├── examples/                # Three real agents + side-by-side Slack demo
+├── src/identity_models/     # Core patterns (Assistant, Claw, audit, inbox, memory)
+├── examples/                # Runnable scenarios (thin wrappers over CLI)
 ├── demos/                   # Full comparison runner
-├── tests/                   # Trust boundary assertions
-└── docs/CHOOSING.md         # Decision guide
+├── notebooks/               # Colab notebook
+├── tests/                   # Trust boundary + snapshot assertions
+└── docs/                    # CHOOSING, FLEET_MAPPING, GitHub Pages site
 ```
+
+---
+
+## Essay / Substack
+
+Writing a post? Use the outline in [`docs/ESSAY_HOOK.md`](docs/ESSAY_HOOK.md) — working title: *"Whose Keys Are in the Lock?"*
 
 ---
 
@@ -190,8 +238,15 @@ Get that wrong and you either over-expose data or build something too weak to be
 ## Related
 
 - [Fleet Engineering](https://github.com/cobusgreyling/fleet-engineering) — govern populations of agents at scale
+- [Five Concerns](https://github.com/cobusgreyling/fleet-engineering/blob/main/docs/five-concerns.md) — identity is concern #3
+- [Shared Inbox HITL](https://github.com/cobusgreyling/fleet-engineering/blob/main/patterns/shared-inbox-hitl.md) — editor review for Claws
+- [Failure Modes](https://github.com/cobusgreyling/fleet-engineering/blob/main/docs/failure-modes.md) — mixed claw/assistant incidents
 - [LangSmith Fleet](https://www.langchain.com/langsmith/fleet) — managed fleet primitives (identity, inbox, audit)
 - [Loop Engineering](https://github.com/cobusgreyling/loop-engineering) — autonomous systems that keep running
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Security: [SECURITY.md](SECURITY.md).
 
 ## License
 
