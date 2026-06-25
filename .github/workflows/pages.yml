@@ -28,9 +28,9 @@ jobs:
       - uses: actions/jekyll-build-pages@v1
         with:
           source: ./docs
-          destination: /_site
+          destination: ./_site
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: /_site
+          path: ./_site
       - id: deployment
         uses: actions/deploy-pages@v4
