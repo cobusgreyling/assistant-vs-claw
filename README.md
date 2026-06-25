@@ -11,9 +11,9 @@
   <img src="assets/header.jpg" width="100%" alt="Assistant vs Claw — whose keys are in the lock?">
 </p>
 
-> **On-behalf-of Assistants and fixed-identity Claws** — and why the distinction matters the moment you share an agent.
+> **On-behalf-of Assistants and fixed-identity Claws**  and why the distinction matters the moment you share an agent.
 
-Runnable illustrations of the two authorization models in [LangSmith Fleet](https://www.langchain.com/langsmith/fleet). Same word — *agent*. Two completely different trust boundaries.
+Runnable illustrations of the two authorization models in [LangSmith Fleet](https://www.langchain.com/langsmith/fleet). Same word  *agent*. Two completely different trust boundaries.
 
 **Created by [Cobus Greyling](https://github.com/cobusgreyling).** Part of the [Fleet Engineering](https://github.com/cobusgreyling/fleet-engineering) stack.
 
